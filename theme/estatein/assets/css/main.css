@@ -1610,7 +1610,8 @@ dialog p + p {
   }
   .hero-art {
     order: -1;
-    height: 302px;
+    height: auto;
+    aspect-ratio: 358 / 302;
     border: 1px solid var(--border);
     border-radius: 12px;
   }

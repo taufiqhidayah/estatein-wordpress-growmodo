@@ -156,7 +156,7 @@ add_action('init', function () {
                 'add_new_item' => 'Add ' . $labels[1],
                 'edit_item' => 'Edit ' . $labels[1],
             ],
-            'public' => false,
+            'public' => 'property' === $type,
             'show_ui' => true,
             'show_in_rest' => true,
             'show_in_menu' => true,
@@ -168,7 +168,10 @@ add_action('init', function () {
                 'thumbnail',
                 'page-attributes',
             ],
-            'rewrite' => false,
+            'rewrite' =>
+                'property' === $type
+                    ? ['slug' => 'properties', 'with_front' => false]
+                    : false,
             'has_archive' => false,
         ]);
     }

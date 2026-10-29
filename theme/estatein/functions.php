@@ -20,7 +20,10 @@ add_filter(
     10,
     2,
 );
-foreach (['content', 'fields', 'newsletter', 'setup'] as $estatein_module) {
+foreach (
+    ['content', 'site', 'fields', 'newsletter', 'inquiries', 'setup']
+    as $estatein_module
+) {
     require_once get_template_directory() . '/inc/' . $estatein_module . '.php';
 }
 

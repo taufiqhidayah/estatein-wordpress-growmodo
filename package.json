@@ -1,0 +1,17 @@
+{
+  "name": "estatein-wordpress-growmodo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Custom WordPress theme for the Growmodo developer assessment",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "setup:local": "node scripts/setup-local.mjs",
+    "package": "node scripts/package.mjs",
+    "test:http": "node tests/http.mjs"
+  },
+  "devDependencies": {
+    "@prettier/plugin-php": "0.24.0",
+    "esbuild": "0.25.12",
+    "prettier": "3.6.2"
+  }
+}

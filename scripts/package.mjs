@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+const root = process.cwd();
+const target = path.join(root, 'deliverables/estatein-theme.zip');
+fs.mkdirSync(path.dirname(target), {recursive:true});
+if (fs.existsSync(target)) fs.unlinkSync(target);
+execFileSync('zip', ['-q', '-r', target, 'estatein', '-x', '*/.DS_Store'], {cwd:path.join(root,'theme')});
+execFileSync('unzip', ['-t', target], {stdio:'pipe'});
+console.log(`Theme ZIP verified: ${target} (${fs.statSync(target).size} bytes)`);

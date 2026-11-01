@@ -1,38 +1,38 @@
 # Verification record
 
-Reviewed on 29 October 2026. Implementation began around 21:30 WIB, with pauses for scope/hosting clarification; active work time was not separately instrumented. The agreed budget is four hours. No claim is made that this work used exactly four hours.
+Reviewed 29 October through 1 November 2026. Work began around 21:30 WIB on 29 October, with pauses and a scope expansion from the homepage to six page types. Active time was not separately instrumented; no four-hour completion claim is made.
 
 ## Environment
 
-- WordPress 7.1.4, PHP CLI/development server 8.3.36, local WordPress SQLite Database Integration 3.1.2, ACF Free 6.8.10.
-- Core files and installed plugin files verified against official distribution checksums.
-- Theme is independent of SQLite. **Production MySQL/MariaDB and hosting behavior have not yet been tested.**
-- Production assets built using esbuild 0.25.12. npm installation reported zero known vulnerabilities at the time checked; this is not a general security guarantee.
+- WordPress 7.1.4, PHP CLI/development server 8.3.36, SQLite Database Integration 3.1.2, ACF Free 6.8.10.
+- Core/plugin distribution checksums were verified during initial setup. Local automatic update checks also ran on resuming development.
+- SQLite is a local fixture only. Production MySQL/MariaDB, hosting rules, HTTPS, and hosted performance remain untested.
+- Production assets use esbuild 0.25.12. Build-time Node dependencies are not required by the deployed theme.
 
 ## Executed checks
 
-- All 13 theme PHP files pass `php -l`; JavaScript passes `node --check`; minified production CSS/JS build successfully.
-- `node tests/http.mjs`: HTTP 200 homepage, expected security headers, no PHP version header, exactly one H1, no temporary Figma URLs, and 39 referenced desktop assets return HTTP 200 with appropriate non-HTML content.
-- Newsletter HTTP checks: missing/invalid nonce returns 403; malformed/XSS-like addresses return 400; honeypot is rejected; valid submission persists; repeat submission has the same public response with one database record; excess attempts return 429; non-JavaScript submission redirects with HTTP 303; logged-out admin access redirects to login. Test records and rate counters are cleaned up.
-- `wp eval-file tests/content.php`: 11 assertions for guest import denial, repeat-import idempotency, preservation of front-page selection and CMS edits, property field updates, and nonce/capability requirements for native saves. Modified content is restored.
-- ACF was temporarily deactivated on the local fixture; the content/permission tests (including an authorized native-field save) and frontend HTTP 200 check passed, then ACF was reactivated.
-- Browser UI checks in the desktop app's Chromium browser: mobile menu open/close, property dialog, FAQ dialog, all three collection dialogs, Escape and focus restoration, privacy/terms dialogs, successful newsletter save, and card navigation from 01 to 02 with appropriate button states.
-- Responsive checks at 320, 390, 768, 1200, 1440, and 1920 CSS pixels. Horizontal document width measured equal to viewport width at 320, 390, 768, 1440, and 1920. Desktop 1920 and mobile 390 full-page screenshots were inspected. No theme-related browser console errors were observed during these checks.
-- Readable stylesheet/script sources and minified production outputs are both included. No runtime dependency on Figma/Google Fonts URLs; image content uses local Media Library files after import.
+- Theme PHP files pass `php -l`, JavaScript sources pass `node --check`, and minified CSS/JS build successfully. ZIP entries are integrity-checked.
+- `node tests/http.mjs`: homepage HTTP 200, expected headers, no PHP version header, one H1, escaped CMS heading, 39 homepage assets, newsletter validation, nonce/honeypot, duplicate handling, real persistence, rate limiting, no-JS redirect, and administrator protection. Test rows/counters are removed.
+- `node tests/full-site-http.mjs`: six routes return 200 with one H1, unique IDs, no empty hrefs/PHP diagnostics, valid cross-page anchor targets, 71 local assets, seven catalog scenarios, and service-to-contact enquiry preselection. Out-of-range pagination clamps to an available page; malformed arrays cannot broaden SQL.
+- `node tests/inquiries-http.mjs`: nonce rejection, real storage, truthful success, no-JS 303 redirect to an owned destination, and protected enquiry dashboard. Test records/counters are removed.
+- `wp eval-file tests/catalog.php`: 16 catalog, pagination, malformed-input, and permission assertions.
+- `wp eval-file tests/inquiries.php`: 28 enquiry assertions covering validation, consent, property references, preference persistence, invalid preference shapes, rate limiting, private storage, and guest denial.
+- `wp eval-file tests/content.php`: 11 CMS/import/native-save permission assertions.
+- `wp eval-file tests/full-site-content.php`: 10 page identity/publication, CMS edit, preservation, nonce, and permission assertions. Changes are restored.
+- ACF was disabled; both content suites and the six-route HTTP suite passed using native fallback fields, then ACF was reactivated.
 
-## Scope decisions visible to a reviewer
+## Browser checks actually performed
 
-- Homepage only, rather than unfinished versions of all six Figma pages. Property and FAQ details use accessible native dialogs.
-- Carousel totals reflect the actual three seeded records, rather than the design's decorative 60/10 totals. Desktop arrows disable when all records already fit. Collection buttons expose all actual records.
-- Copyright uses the current year. Privacy and demonstration terms explain sample content and subscriber storage. No purchases or automated email delivery are implemented.
-- Mobile property order follows the shared CMS source order. Tablet layout is adapted between the provided desktop and mobile references. Additional laptop Figma context requests hit the account's MCP limit after desktop/mobile detail was obtained.
-- Generic social platform links are present for visual fidelity; no real Estatein profile or office address was invented.
+The desktop app's Chromium browser was used. Homepage menu, banner, carousels, FAQ/collection/privacy/terms dialogs, Escape/focus return, and newsletter saving were checked during the original homepage work. After expansion, mobile menu navigation to Properties, type filtering to Metropolitan Haven, detail-page navigation, office-region selection with arrow keys, and genuine Contact enquiry persistence were exercised. Client-story dialog Escape returns focus to its trigger. Optional property photo thumbnails were checked using a temporary second-photo fixture, then the original record was restored. No theme-related console errors were observed in the inspected session.
 
-## Still outstanding
+All six page types have equal viewport/document widths at 320, 768, and 1440 CSS pixels. Additional 390 and 1920 checks and screenshots cover the new layouts. Desktop Contact/Services section positions were compared with screenshot proportions; mobile screenshots and individual form/detail views were inspected. Existing homepage checks also covered 1200 pixels. These are targeted visual and interaction checks, not an accessibility certification or a full browser matrix.
 
-- Public hosting and HTTPS deployment; owner will purchase hosting. Local preview is not acceptable as the final live-demo deliverable.
-- Production PHP patch verification, MySQL/MariaDB behavior, proxy/security-header rules, upload-directory execution denial, backups, and hosted Lighthouse measurements.
-- Firefox, Safari, and Edge testing. A native Safari inspection attempt could not be completed through the available UI control; no Safari compatibility pass is claimed. These checks are not inherently dependent on hosting, but remain unperformed.
-- Configure real contact information and business/privacy text before real-world use. The subscription list has no connected mail provider or verified opt-in workflow, so it should use test data during assessment review.
+## Honest design/content limits
 
-The included checks are targeted functional/security tests, not a penetration test or an accessibility certification.
+Properties, Services, and Contact use supplied desktop screenshots. About Us and Property Details use the supplementary reference site and available original design geometry. Missing mobile design frames were adapted responsively. Property Details includes gallery, description, specs, amenities, enquiry, and related cards, but not the original Figma's extended pricing tables. Exact six-page pixel parity is not claimed.
+
+Temporary gallery/team photos and small icons were cropped with explicit owner permission. About hero uses the supplementary reference asset. Team identities, clients, offices, and listings are demonstration content. Social links open the platforms. Real record counts replace decorative totals. No transactional purchasing, external CRM, or automatic email delivery is implemented.
+
+## Outstanding deployment work
+
+Public hosting is pending the owner's purchase. Before submission: deploy to patched PHP/MySQL hosting with HTTPS; verify all routes, database behavior, headers, upload execution denial, backups, form caching/nonce behavior, and logged-out public access. Run real Chrome, Firefox, Safari, and Edge checks plus hosted performance measurements. Safari inspection was previously attempted but did not complete; no Safari/Firefox/Edge pass is claimed. Replace sample business/privacy/contact information before accepting real users' data.

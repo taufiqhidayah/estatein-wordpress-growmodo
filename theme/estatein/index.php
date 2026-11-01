@@ -1,4 +1,4 @@
-<?php defined('ABSPATH') || exit();
+<?php defined("ABSPATH") || exit();
 get_header();
 ?>
 <main id="main" class="wrap standard-page">
@@ -6,7 +6,7 @@ get_header();
     while (have_posts()):
         the_post(); ?>
 <article <?php post_class(
-    'editor-content',
+    "editor-content",
 ); ?>><h1><?php the_title(); ?></h1><?php the_content(); ?></article>
 <?php
     endwhile;
@@ -14,7 +14,7 @@ get_header();
 else:
      ?>
 <h1>Nothing here yet</h1><p><a href="<?php echo esc_url(
-    home_url('/'),
+    home_url("/"),
 ); ?>">Return to the homepage</a></p>
 <?php
 endif; ?>

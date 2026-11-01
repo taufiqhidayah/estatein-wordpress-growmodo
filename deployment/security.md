@@ -18,6 +18,8 @@ Use the [PHP supported-versions list](https://www.php.net/supported-versions.php
 - Frontend responses set `X-Content-Type-Options`, `Referrer-Policy`, and a restrictive camera/microphone/geolocation `Permissions-Policy`.
 - Database credentials, salts, local admin access, test databases, and debug logs are excluded from Git and the theme package.
 
+- Contact/property enquiries use the same POST/nonce/honeypot pattern with a separate rate bucket. They store name, email, optional phone, property ID, message, consent, UTC timestamp, and bounded preference data. They are visible only under the administrator Enquiries menu; no public REST endpoint exposes them. Review retention and privacy requirements before accepting real data.
+
 ## Apply through hosting configuration
 
 These settings belong to the server or WordPress configuration, not a theme. Review with the provider and preserve working WordPress rewrite rules.

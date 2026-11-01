@@ -134,9 +134,10 @@ wp(["option", "update", "default_ping_status", "closed"]);
 console.log(
   wp([
     "eval",
-    'wp_set_current_user(1); $result = estatein_import_demo(); if (is_wp_error($result)) { WP_CLI::error($result->get_error_message()); } WP_CLI::success("Demo content is ready.");',
+    'wp_set_current_user(1); $result = estatein_import_full_site(); if (is_wp_error($result)) { WP_CLI::error($result->get_error_message()); } WP_CLI::success("All six page types are ready.");',
   ]),
 );
+wp(["rewrite", "structure", "/%postname%/"]);
 fs.writeFileSync(
   path.join(runtime, "php.ini"),
   `expose_php=Off\ndisplay_errors=Off\nlog_errors=On\nerror_log="${path.join(runtime, "php-errors.log")}"\nsession.upload_progress.enabled=0\npost_max_size=16M\nupload_max_filesize=12M\n`,

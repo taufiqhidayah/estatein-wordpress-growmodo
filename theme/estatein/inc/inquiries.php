@@ -1,15 +1,15 @@
 <?php
 /** Private contact/property inquiries, independent of email delivery. */
-defined('ABSPATH') || exit();
+defined("ABSPATH") || exit();
 
 function estatein_inquiries_install()
 {
-    if ('1' === get_option('estatein_inquiries_schema')) {
+    if ("2" === get_option("estatein_inquiries_schema")) {
         return;
     }
     global $wpdb;
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    $table = $wpdb->prefix . 'estatein_inquiries';
+    require_once ABSPATH . "wp-admin/includes/upgrade.php";
+    $table = $wpdb->prefix . "estatein_inquiries";
     dbDelta(
         "CREATE TABLE {$table} (
         id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -21,31 +21,32 @@ function estatein_inquiries_install()
         message text NOT NULL,
         created_at datetime NOT NULL,
         consent tinyint(1) NOT NULL DEFAULT 1,
+        preferences text NULL,
         PRIMARY KEY  (id),
         KEY created_at (created_at)
     ) " .
             $wpdb->get_charset_collate() .
-            ';',
+            ";",
     );
     if (
         $wpdb->get_var(
-            $wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table)),
+            $wpdb->prepare("SHOW TABLES LIKE %s", $wpdb->esc_like($table)),
         ) === $table
     ) {
-        update_option('estatein_inquiries_schema', '1', false);
+        update_option("estatein_inquiries_schema", "2", false);
     }
 }
-add_action('after_switch_theme', 'estatein_inquiries_install');
-add_action('admin_init', 'estatein_inquiries_install');
+add_action("after_switch_theme", "estatein_inquiries_install");
+add_action("admin_init", "estatein_inquiries_install");
 
 function estatein_inquiry_types()
 {
     return [
-        'general' => 'General enquiry',
-        'buy' => 'Buying a property',
-        'sell' => 'Selling a property',
-        'rent' => 'Renting a property',
-        'invest' => 'Property investment',
+        "general" => "General enquiry",
+        "buy" => "Buying a property",
+        "sell" => "Selling a property",
+        "rent" => "Renting a property",
+        "invest" => "Property investment",
     ];
 }
 
@@ -54,64 +55,64 @@ function estatein_validate_inquiry($source)
 {
     $raw = fn($key) => isset($source[$key]) && is_string($source[$key])
         ? trim(wp_unslash($source[$key]))
-        : '';
+        : "";
     $errors = [];
     foreach (
         [
-            'full_name',
-            'first_name',
-            'last_name',
-            'email',
-            'phone',
-            'inquiry_type',
-            'property_id',
-            'message',
-            'consent',
+            "full_name",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "inquiry_type",
+            "property_id",
+            "message",
+            "consent",
         ]
         as $key
     ) {
         if (isset($source[$key]) && !is_string($source[$key])) {
-            $errors[$key] = 'Invalid field value.';
+            $errors[$key] = "Invalid field value.";
         }
     }
-    $name = $raw('full_name');
-    if ('' === $name) {
-        $first = $raw('first_name');
-        $last = $raw('last_name');
-        if ('' === $first || '' === $last) {
-            $errors['full_name'] = 'Please enter your full name.';
+    $name = $raw("full_name");
+    if ("" === $name) {
+        $first = $raw("first_name");
+        $last = $raw("last_name");
+        if ("" === $first || "" === $last) {
+            $errors["full_name"] = "Please enter your full name.";
         }
-        $name = trim($first . ' ' . $last);
+        $name = trim($first . " " . $last);
     }
     $name = sanitize_text_field($name);
     if (mb_strlen($name) < 2 || mb_strlen($name) > 120) {
-        $errors['full_name'] =
-            'Please enter a name between 2 and 120 characters.';
+        $errors["full_name"] =
+            "Please enter a name between 2 and 120 characters.";
     }
-    $email = $raw('email');
+    $email = $raw("email");
     if (strlen($email) > 254 || !is_email($email)) {
-        $errors['email'] = 'Please enter a valid email address.';
+        $errors["email"] = "Please enter a valid email address.";
     }
-    $phone = $raw('phone');
+    $phone = $raw("phone");
     if (
-        '' !== $phone &&
+        "" !== $phone &&
         (strlen($phone) > 40 ||
             !preg_match('/^[+0-9(). #x-]{5,40}$/iD', $phone))
     ) {
-        $errors['phone'] = 'Please enter a valid phone number.';
+        $errors["phone"] = "Please enter a valid phone number.";
     }
-    $type = $raw('inquiry_type') ?: 'general';
+    $type = $raw("inquiry_type") ?: "general";
     if (!isset(estatein_inquiry_types()[$type])) {
-        $errors['inquiry_type'] = 'Please select an enquiry type.';
+        $errors["inquiry_type"] = "Please select an enquiry type.";
     }
-    $message = sanitize_textarea_field($raw('message'));
+    $message = sanitize_textarea_field($raw("message"));
     if (mb_strlen($message) < 10 || mb_strlen($message) > 5000) {
-        $errors['message'] =
-            'Please enter a message between 10 and 5,000 characters.';
+        $errors["message"] =
+            "Please enter a message between 10 and 5,000 characters.";
     }
-    $property_raw = $raw('property_id');
+    $property_raw = $raw("property_id");
     $property_id =
-        '' === $property_raw
+        "" === $property_raw
             ? 0
             : (ctype_digit($property_raw)
                 ? (int) $property_raw
@@ -119,90 +120,155 @@ function estatein_validate_inquiry($source)
     if (
         $property_id < 0 ||
         ($property_id > 0 &&
-            ('estatein_property' !== get_post_type($property_id) ||
-                'publish' !== get_post_status($property_id)))
+            ("estatein_property" !== get_post_type($property_id) ||
+                "publish" !== get_post_status($property_id)))
     ) {
-        $errors['property_id'] = 'Please select an available property.';
+        $errors["property_id"] = "Please select an available property.";
     }
-    if ('1' !== $raw('consent')) {
-        $errors['consent'] =
-            'Please agree to the privacy terms before sending.';
+    if ("1" !== $raw("consent")) {
+        $errors["consent"] =
+            "Please agree to the privacy terms before sending.";
+    }
+    $preferences = [];
+    foreach (
+        [
+            "preferred_location" => 80,
+            "property_type" => 40,
+            "referral" => 30,
+            "contact_phone" => 40,
+            "contact_email" => 254,
+        ]
+        as $key => $limit
+    ) {
+        $value = $raw($key);
+        if (
+            (isset($source[$key]) && !is_string($source[$key])) ||
+            mb_strlen($value) > $limit
+        ) {
+            $errors[$key] = "Please check this field.";
+        }
+        if ("" !== $value) {
+            $preferences[$key] = sanitize_text_field($value);
+        }
+    }
+    foreach (
+        [
+            "bedrooms" => ["1", "2", "3", "4", "5"],
+            "bathrooms" => ["1", "2", "3", "4", "5"],
+            "budget" => ["under-500k", "500k-1m", "1m-2m", "over-2m"],
+            "preferred_contact" => ["email", "phone"],
+        ]
+        as $key => $allowed
+    ) {
+        $value = $raw($key);
+        if (
+            (isset($source[$key]) && !is_string($source[$key])) ||
+            ("" !== $value && !in_array($value, $allowed, true))
+        ) {
+            $errors[$key] = "Please select a valid option.";
+        }
+        if ("" !== $value) {
+            $preferences[$key] = $value;
+        }
+    }
+    if (
+        "phone" === ($preferences["preferred_contact"] ?? "") &&
+        "" === $phone &&
+        empty($preferences["contact_phone"])
+    ) {
+        $errors["contact_phone"] =
+            "Please provide a phone number for your preferred contact method.";
+    }
+    if (
+        !empty($preferences["contact_phone"]) &&
+        !preg_match('/^[+0-9(). #x-]{5,40}$/iD', $preferences["contact_phone"])
+    ) {
+        $errors["contact_phone"] = "Please enter a valid phone number.";
+    }
+    if (
+        !empty($preferences["contact_email"]) &&
+        !is_email($preferences["contact_email"])
+    ) {
+        $errors["contact_email"] =
+            "Please enter a valid contact email address.";
     }
     if ($errors) {
-        return new WP_Error('invalid', 'Please check the highlighted fields.', [
-            'fields' => $errors,
+        return new WP_Error("invalid", "Please check the highlighted fields.", [
+            "fields" => $errors,
         ]);
     }
     return [
-        'full_name' => $name,
-        'email' => strtolower(sanitize_email($email)),
-        'phone' => $phone,
-        'inquiry_type' => $type,
-        'property_id' => $property_id,
-        'message' => $message,
-        'created_at' => current_time('mysql', true),
-        'consent' => 1,
+        "full_name" => $name,
+        "email" => strtolower(sanitize_email($email)),
+        "phone" => $phone,
+        "inquiry_type" => $type,
+        "property_id" => $property_id,
+        "message" => $message,
+        "created_at" => current_time("mysql", true),
+        "consent" => 1,
+        "preferences" => wp_json_encode($preferences),
     ];
 }
 
 function estatein_inquiry_messages()
 {
     return [
-        'success' => 'Thank you! Your enquiry has been saved.',
-        'invalid' =>
-            'Please check your details and complete all required fields.',
-        'expired' => 'This form has expired. Reload the page and try again.',
-        'limited' => 'Too many attempts. Please try again in a few minutes.',
-        'error' => 'Your enquiry could not be saved. Please try again later.',
+        "success" => "Thank you! Your enquiry has been saved.",
+        "invalid" =>
+            "Please check your details and complete all required fields.",
+        "expired" => "This form has expired. Reload the page and try again.",
+        "limited" => "Too many attempts. Please try again in a few minutes.",
+        "error" => "Your enquiry could not be saved. Please try again later.",
     ];
 }
 
 function estatein_inquiry_process()
 {
-    if ('POST' !== ($_SERVER['REQUEST_METHOD'] ?? '')) {
-        return ['invalid', 405, []];
+    if ("POST" !== ($_SERVER["REQUEST_METHOD"] ?? "")) {
+        return ["invalid", 405, []];
     }
     if (
         !wp_verify_nonce(
-            estatein_request_text($_POST, 'estatein_nonce', 100),
-            'estatein_inquiry',
+            estatein_request_text($_POST, "estatein_nonce", 100),
+            "estatein_inquiry",
         )
     ) {
-        return ['expired', 403, []];
+        return ["expired", 403, []];
     }
-    if (!empty($_POST['company_website'])) {
-        return ['invalid', 400, []];
+    if (!empty($_POST["company_website"])) {
+        return ["invalid", 400, []];
     }
     $ip =
-        isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
-            ? $_SERVER['REMOTE_ADDR']
-            : 'unknown';
+        isset($_SERVER["REMOTE_ADDR"]) && is_string($_SERVER["REMOTE_ADDR"])
+            ? $_SERVER["REMOTE_ADDR"]
+            : "unknown";
     $rate_key =
-        'estatein_inquiry_rate_' . hash_hmac('sha256', $ip, wp_salt('nonce'));
+        "estatein_inquiry_rate_" . hash_hmac("sha256", $ip, wp_salt("nonce"));
     $attempts = (int) get_transient($rate_key);
     if ($attempts >= 5) {
-        return ['limited', 429, []];
+        return ["limited", 429, []];
     }
     set_transient($rate_key, $attempts + 1, 10 * MINUTE_IN_SECONDS);
     $record = estatein_validate_inquiry($_POST);
     if (is_wp_error($record)) {
-        return ['invalid', 400, $record->get_error_data()['fields'] ?? []];
+        return ["invalid", 400, $record->get_error_data()["fields"] ?? []];
     }
-    if ('1' !== get_option('estatein_inquiries_schema')) {
-        return ['error', 503, []];
+    if ("2" !== get_option("estatein_inquiries_schema")) {
+        return ["error", 503, []];
     }
     global $wpdb;
-    $saved = $wpdb->insert($wpdb->prefix . 'estatein_inquiries', $record, [
-        '%s',
-        '%s',
-        '%s',
-        '%s',
-        '%d',
-        '%s',
-        '%s',
-        '%d',
+    $saved = $wpdb->insert($wpdb->prefix . "estatein_inquiries", $record, [
+        "%s",
+        "%s",
+        "%s",
+        "%s",
+        "%d",
+        "%s",
+        "%s",
+        "%d",
+        "%s",
     ]);
-    return false === $saved ? ['error', 503, []] : ['success', 200, []];
+    return false === $saved ? ["error", 503, []] : ["success", 200, []];
 }
 
 function estatein_inquiry_submit()
@@ -212,79 +278,79 @@ function estatein_inquiry_submit()
     if (wp_doing_ajax()) {
         wp_send_json(
             [
-                'success' => 200 === $code,
-                'status' => $status,
-                'message' => estatein_inquiry_messages()[$status],
-                'fields' => $fields,
+                "success" => 200 === $code,
+                "status" => $status,
+                "message" => estatein_inquiry_messages()[$status],
+                "fields" => $fields,
             ],
             $code,
         );
     }
     // Never accept a request-provided redirect URL.
-    $id = absint(estatein_request_text($_POST, 'property_id', 20));
+    $id = absint(estatein_request_text($_POST, "property_id", 20));
     $url =
         $id &&
-        'estatein_property' === get_post_type($id) &&
-        'publish' === get_post_status($id)
+        "estatein_property" === get_post_type($id) &&
+        "publish" === get_post_status($id)
             ? get_permalink($id)
-            : estatein_page_url('contact');
+            : estatein_page_url("contact");
     wp_safe_redirect(
-        add_query_arg('enquiry', $status, $url) . '#contact-form',
+        add_query_arg("enquiry", $status, $url) . "#contact-form",
         303,
     );
     exit();
 }
 foreach (
     [
-        'admin_post_estatein_inquiry',
-        'admin_post_nopriv_estatein_inquiry',
-        'wp_ajax_estatein_inquiry',
-        'wp_ajax_nopriv_estatein_inquiry',
+        "admin_post_estatein_inquiry",
+        "admin_post_nopriv_estatein_inquiry",
+        "wp_ajax_estatein_inquiry",
+        "wp_ajax_nopriv_estatein_inquiry",
     ]
     as $hook
 ) {
-    add_action($hook, 'estatein_inquiry_submit');
+    add_action($hook, "estatein_inquiry_submit");
 }
-add_action('admin_menu', function () {
+add_action("admin_menu", function () {
     add_menu_page(
-        'Enquiries',
-        'Enquiries',
-        'manage_options',
-        'estatein-inquiries',
-        'estatein_inquiries_admin',
-        'dashicons-format-chat',
+        "Enquiries",
+        "Enquiries",
+        "manage_options",
+        "estatein-inquiries",
+        "estatein_inquiries_admin",
+        "dashicons-format-chat",
         31,
     );
 });
 
 function estatein_inquiries_admin()
 {
-    if (!current_user_can('manage_options')) {
+    if (!current_user_can("manage_options")) {
         return;
     }
     global $wpdb;
-    $table = $wpdb->prefix . 'estatein_inquiries';
-    if (isset($_POST['delete_inquiry'])) {
-        check_admin_referer('estatein_delete_inquiry');
-        if (!is_scalar($_POST['delete_inquiry'])) {
-            wp_die('Invalid enquiry identifier.', '', ['response' => 400]);
+    $table = $wpdb->prefix . "estatein_inquiries";
+    if (isset($_POST["delete_inquiry"])) {
+        check_admin_referer("estatein_delete_inquiry");
+        if (!is_scalar($_POST["delete_inquiry"])) {
+            wp_die("Invalid enquiry identifier.", "", ["response" => 400]);
         }
         $deleted = $wpdb->delete(
             $table,
-            ['id' => absint($_POST['delete_inquiry'])],
-            ['%d'],
+            ["id" => absint($_POST["delete_inquiry"])],
+            ["%d"],
         );
         echo '<div class="notice notice-' .
-            (false === $deleted ? 'error' : 'success') .
+            (false === $deleted ? "error" : "success") .
             '"><p>' .
             esc_html(
                 false === $deleted
-                    ? 'Enquiry could not be removed.'
-                    : 'Enquiry removed.',
+                    ? "Enquiry could not be removed."
+                    : "Enquiry removed.",
             ) .
-            '</p></div>';
+            "</p></div>";
     }
-    $page = max(1, absint(estatein_request_text($_GET, 'paged', 10)));
+    $page = max(1, absint(estatein_request_text($_GET, "paged", 10)));
     $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
     $rows = $wpdb->get_results(
         $wpdb->prepare(
@@ -295,30 +361,42 @@ function estatein_inquiries_admin()
     );
     echo '<div class="wrap"><h1>Contact and property enquiries</h1><p>Requests are stored privately here. No email delivery integration is configured. Dates are UTC.</p><table class="widefat striped"><thead><tr><th>Contact</th><th>Enquiry</th><th>Received</th><th>Action</th></tr></thead><tbody>';
     foreach ($rows as $row) {
-        echo '<tr><td><strong>' .
+        echo "<tr><td><strong>" .
             esc_html($row->full_name) .
-            '</strong><br>' .
+            "</strong><br>" .
             esc_html($row->email) .
-            '<br>' .
+            "<br>" .
             esc_html($row->phone) .
-            '</td><td><strong>' .
+            "</td><td><strong>" .
             esc_html(
-                estatein_inquiry_types()[$row->inquiry_type] ?? 'Enquiry',
+                estatein_inquiry_types()[$row->inquiry_type] ?? "Enquiry",
             ) .
-            '</strong>';
+            "</strong>";
         if ($row->property_id) {
-            echo '<p>Property: ' .
+            echo "<p>Property: " .
                 esc_html(
-                    get_the_title($row->property_id) ?: 'Unavailable property',
+                    get_the_title($row->property_id) ?: "Unavailable property",
                 ) .
-                '</p>';
+                "</p>";
+        }
+        $preferences = json_decode($row->preferences ?? "{}", true);
+        if (is_array($preferences)) {
+            foreach ($preferences as $key => $value) {
+                if (is_scalar($value)) {
+                    echo "<p><strong>" .
+                        esc_html(ucwords(str_replace("_", " ", $key))) .
+                        ":</strong> " .
+                        esc_html((string) $value) .
+                        "</p>";
+                }
+            }
         }
         echo '<p style="white-space:pre-wrap">' .
             esc_html($row->message) .
-            '</p></td><td>' .
+            "</p></td><td>" .
             esc_html($row->created_at) .
             '</td><td><form method="post">';
-        wp_nonce_field('estatein_delete_inquiry');
+        wp_nonce_field("estatein_delete_inquiry");
         echo '<button class="button" name="delete_inquiry" value="' .
             (int) $row->id .
             '">Delete</button></form></td></tr>';
@@ -326,14 +404,14 @@ function estatein_inquiries_admin()
     if (!$rows) {
         echo '<tr><td colspan="4">No enquiries yet.</td></tr>';
     }
-    echo '</tbody></table>' .
+    echo "</tbody></table>" .
         wp_kses_post(
             paginate_links([
-                'base' => add_query_arg('paged', '%#%'),
-                'format' => '',
-                'current' => $page,
-                'total' => (int) ceil($total / 25),
+                "base" => add_query_arg("paged", "%#%"),
+                "format" => "",
+                "current" => $page,
+                "total" => (int) ceil($total / 25),
             ]),
         ) .
-        '</div>';
+        "</div>";
 }

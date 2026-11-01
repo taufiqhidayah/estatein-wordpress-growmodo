@@ -32,9 +32,9 @@ def footer(canvas, doc):
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(MUTED)
     canvas.drawString(46, 28, "ESTATEIN  /  GROWMODO WORDPRESS ASSESSMENT")
-    canvas.drawRightString(width - 46, 28, f"29 OCT 2026  |  {doc.page}/2")
+    canvas.drawRightString(width - 46, 28, f"01 NOV 2026  |  {doc.page}/2")
 
-story = [Paragraph("01 / IMPLEMENTATION", styles["label"]), Paragraph("Estatein", styles["title"]), Paragraph("Custom WordPress homepage<br/>Development process, architecture, and delivery notes", styles["sub"])]
+story = [Paragraph("01 / IMPLEMENTATION", styles["label"]), Paragraph("Estatein", styles["title"]), Paragraph("Six-page custom WordPress theme<br/>Development process, architecture, and delivery notes", styles["sub"])]
 sections = (ROOT / "docs/DEVELOPMENT.md").read_text().split("\n## ")[1:]
 for index, section in enumerate(sections):
     title, body = section.split("\n", 1)
